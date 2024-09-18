@@ -1,62 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flashcard App</title>
-  <style>
-      body {
-          font-family: Arial, sans-serif;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          margin: 0;
-          background-color: #f0f0f0;
-      }
-      .container {
-          text-align: center;
-      }
-      #flashcard {
-          width: 300px;
-          height: 200px;
-          background-color: white;
-          border-radius: 10px;
-          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          font-size: 24px;
-          margin-bottom: 20px;
-          cursor: pointer;
-      }
-      #controls {
-          display: flex;
-          justify-content: center;
-          gap: 10px;
-      }
-      button {
-          padding: 10px 20px;
-          font-size: 16px;
-          cursor: pointer;
-      }
-      #file-input {
-          margin-bottom: 20px;
-      }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            box-sizing: border-box;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+        #flashcard {
+            width: 90%;
+            height: 50vh;
+            max-height: 400px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            margin: 20px auto;
+            cursor: pointer;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        #controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        @media (max-width: 600px) {
+            #flashcard {
+                font-size: 20px;
+                height: 60vh;
+            }
+            button {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-      <input type="file" id="file-input" accept=".md">
-      <div id="flashcard">Load a markdown file to start</div>
-      <div id="controls">
-          <button id="prev">Previous</button>
-          <button id="flip">Flip</button>
-          <button id="next">Next</button>
-      </div>
-  </div>
+    <div class="container">
+        <h1>Flashcard App</h1>
+        <button id="load-flashcards">Load Flashcards</button>
+        <div id="flashcard">Click 'Load Flashcards' to start</div>
+        <div id="controls">
+            <button id="prev">Previous</button>
+            <button id="flip">Flip</button>
+            <button id="next">Next</button>
+        </div>
+    </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/2.0.3/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/2.0.3/marked.min.js"></script>
   <script>
       const fileInput = document.getElementById('file-input');
       const flashcard = document.getElementById('flashcard');
