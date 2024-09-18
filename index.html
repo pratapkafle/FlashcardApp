@@ -5,223 +5,174 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flashcard App</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            background-color: #f0f0f0;
-            box-sizing: border-box;
-        }
-        .container {
-            width: 100%;
-            max-width: 800px;
-            text-align: center;
-        }
-        #flashcard {
-            width: 90%;
-            height: 50vh;
-            max-height: 400px;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            margin: 20px auto;
-            cursor: pointer;
-            padding: 20px;
-            box-sizing: border-box;
-            overflow-y: auto;
-        }
-        #controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            margin: 5px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #flashcard-sets {
-            margin-bottom: 20px;
-        }
-        select {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 5px;
-        }
-        @media (max-width: 600px) {
-            #flashcard {
-                font-size: 20px;
-                height: 60vh;
-            }
-            button {
-                padding: 8px 16px;
-                font-size: 14px;
-            }
-        }
+    /* ... (keep the existing styles) ... */
+    .options {
+        text-align: left;
+        margin-top: 10px;
+    }
+    .answer {
+        margin-top: 10px;
+        font-weight: bold;
+    }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Flashcard App</h1>
-        <div id="flashcard-sets">
-            <select id="set-selector">
-                <option value="">Select a flashcard set</option>
-            </select>
-        </div>
-        <button id="load-flashcards">Load Flashcards</button>
-        <div id="flashcard">Select a flashcard set and click 'Load Flashcards' to start</div>
-        <div id="controls">
-            <button id="prev">Previous</button>
-            <button id="flip">Flip</button>
-            <button id="next">Next</button>
-        </div>
+    <h1>Flashcard App</h1>
+    <div id="flashcard-sets">
+    <select id="set-selector">
+    <option value="">Select a flashcard set</option>
+    </select>
+    </div>
+    <button id="load-flashcards">Load Flashcards</button>
+    <div id="flashcard">Select a flashcard set and click 'Load Flashcards' to start</div>
+    <div id="controls">
+    <button id="prev">Previous</button>
+    <button id="flip">Flip</button>
+    <button id="next">Next</button>
+    </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/2.0.3/marked.min.js"></script>
     <script>
-        const setSelector = document.getElementById('set-selector');
-        const loadButton = document.getElementById('load-flashcards');
-        const flashcard = document.getElementById('flashcard');
-        const prevButton = document.getElementById('prev');
-        const flipButton = document.getElementById('flip');
-        const nextButton = document.getElementById('next');
+    const setSelector = document.getElementById('set-selector');
+    const loadButton = document.getElementById('load-flashcards');
+    const flashcard = document.getElementById('flashcard');
+    const prevButton = document.getElementById('prev');
+    const flipButton = document.getElementById('flip');
+    const nextButton = document.getElementById('next');
 
-        let flashcards = [];
-        let currentIndex = 0;
-        let showingQuestion = true;
+    let flashcards = [];
+    let currentIndex = 0;
+    let showingQuestion = true;
 
-        document.addEventListener('DOMContentLoaded', loadFlashcardSets);
-        loadButton.addEventListener('click', loadSelectedFlashcards);
+    document.addEventListener('DOMContentLoaded', loadFlashcardSets);
+    loadButton.addEventListener('click', loadSelectedFlashcards);
 
-        async function loadFlashcardSets() {
-            try {
-                const response = await fetch('https://api.github.com/repos/pratapkafle/FlashcardApp/contents/flashcards');
-                if (!response.ok) {
-                    throw new Error('Failed to load flashcard sets');
-                }
-                const files = await response.json();
-                const mdFiles = files.filter(file => file.name.endsWith('.md'));
-                populateSetSelector(mdFiles);
-            } catch (error) {
-                console.error('Error loading flashcard sets:', error);
-                setSelector.innerHTML = '<option value="">Error loading flashcard sets</option>';
+    async function loadFlashcardSets() {
+    try {
+    const response = await fetch('https://api.github.com/repos/pratapkafle/FlashcardApp/contents/flashcards');
+    if (!response.ok) {
+    throw new Error('Failed to load flashcard sets');
+    }
+    const files = await response.json();
+    const mdFiles = files.filter(file => file.name.endsWith('.md'));
+    populateSetSelector(mdFiles);
+    } catch (error) {
+    console.error('Error loading flashcard sets:', error);
+    setSelector.innerHTML = '<option value="">Error loading flashcard sets</option>';
+    }
+    }
+
+    function populateSetSelector(files) {
+    setSelector.innerHTML = '<option value="">Select a flashcard set</option>';
+    files.forEach(file => {
+    const option = document.createElement('option');
+    option.value = file.name;
+    option.textContent = file.name.replace('.md', '').replace(/_/g, ' ');
+    setSelector.appendChild(option);
+    });
+    }
+
+    async function loadSelectedFlashcards() {
+    const selectedSet = setSelector.value;
+    if (!selectedSet) {
+    flashcard.textContent = 'Please select a flashcard set';
+    return;
+    }
+
+    try {
+    const response = await fetch(`flashcards/${selectedSet}?_=${new Date().getTime()}`);
+    if (!response.ok) {
+    throw new Error('Failed to load flashcards');
+    }
+    const content = await response.text();
+    parseMarkdown(content);
+    showCard();
+    loadButton.textContent = 'Refresh Flashcards';
+    } catch (error) {
+    console.error('Error loading flashcards:', error);
+    flashcard.textContent = 'Error loading flashcards. Please try again.';
+    }
+    }
+
+    function parseMarkdown(content) {
+    const lines = content.split('\n');
+    flashcards = [];
+    let currentQuestion = '';
+    let currentOptions = [];
+    let currentAnswer = '';
+
+    for (const line of lines) {
+        if (line.trim() && !line.match(/^[a-e]\./)) {
+            if (currentQuestion) {
+                flashcards.push({ question: currentQuestion, options: currentOptions, answer: currentAnswer });
+                currentOptions = [];
+                currentAnswer = '';
             }
+            currentQuestion = line.trim();
+        } else if (line.match(/^[a-e]\./)) {
+            currentOptions.push(line.trim());
+        } else if (line.trim() === 'Answer') {
+            // Next line will be the answer
+        } else if (currentOptions.length > 0 && line.trim()) {
+            currentAnswer = line.trim();
         }
+    }
 
-        function populateSetSelector(files) {
-            setSelector.innerHTML = '<option value="">Select a flashcard set</option>';
-            files.forEach(file => {
-                const option = document.createElement('option');
-                option.value = file.name;
-                option.textContent = file.name.replace('.md', '').replace(/_/g, ' ');
-                setSelector.appendChild(option);
-            });
-        }
+    if (currentQuestion) {
+        flashcards.push({ question: currentQuestion, options: currentOptions, answer: currentAnswer });
+    }
 
-        async function loadSelectedFlashcards() {
-            const selectedSet = setSelector.value;
-            if (!selectedSet) {
-                flashcard.textContent = 'Please select a flashcard set';
-                return;
-            }
+    currentIndex = 0;
+    showingQuestion = true;
+    }
 
-            try {
-                const response = await fetch(`flashcards/${selectedSet}?_=${new Date().getTime()}`);
-                if (!response.ok) {
-                    throw new Error('Failed to load flashcards');
-                }
-                const content = await response.text();
-                parseMarkdown(content);
-                showCard();
-                loadButton.textContent = 'Refresh Flashcards';
-            } catch (error) {
-                console.error('Error loading flashcards:', error);
-                flashcard.textContent = 'Error loading flashcards. Please try again.';
-            }
-        }
+    function showCard() {
+    if (flashcards.length === 0) {
+    flashcard.textContent = 'No flashcards available';
+    return;
+    }
 
-        function parseMarkdown(content) {
-            const lines = content.split('\n');
-            flashcards = [];
-            let currentQuestion = '';
-            let currentAnswer = '';
-
-            for (const line of lines) {
-                if (line.startsWith('# ')) {
-                    if (currentQuestion && currentAnswer) {
-                        flashcards.push({ question: currentQuestion, answer: currentAnswer.trim() });
-                        currentQuestion = '';
-                        currentAnswer = '';
-                    }
-                    currentQuestion = line.substring(2);
-                } else if (line.trim() !== '') {
-                    currentAnswer += line + '\n';
-                }
-            }
-
-            if (currentQuestion && currentAnswer) {
-                flashcards.push({ question: currentQuestion, answer: currentAnswer.trim() });
-            }
-
-            currentIndex = 0;
-            showingQuestion = true;
-        }
-
-        function showCard() {
-            if (flashcards.length === 0) {
-                flashcard.textContent = 'No flashcards available';
-                return;
-            }
-
-            const card = flashcards[currentIndex];
-            const content = showingQuestion ? card.question : card.answer;
-            flashcard.innerHTML = marked(content);
-        }
-
-        flashcard.addEventListener('click', () => {
-            showingQuestion = !showingQuestion;
-            showCard();
+    const card = flashcards[currentIndex];
+    let content = `<h2>${card.question}</h2>`;
+    if (showingQuestion) {
+        content += '<div class="options">';
+        card.options.forEach(option => {
+            content += `<p>${option}</p>`;
         });
+        content += '</div>';
+    } else {
+        content += `<div class="answer">Answer: ${card.answer}</div>`;
+    }
+    flashcard.innerHTML = content;
+    }
 
-        prevButton.addEventListener('click', () => {
-            if (currentIndex > 0) {
-                currentIndex--;
-                showingQuestion = true;
-                showCard();
-            }
-        });
+    flashcard.addEventListener('click', () => {
+    showingQuestion = !showingQuestion;
+    showCard();
+    });
 
-        nextButton.addEventListener('click', () => {
-            if (currentIndex < flashcards.length - 1) {
-                currentIndex++;
-                showingQuestion = true;
-                showCard();
-            }
-        });
+    prevButton.addEventListener('click', () => {
+    if (currentIndex > 0) {
+    currentIndex--;
+    showingQuestion = true;
+    showCard();
+    }
+    });
 
-        flipButton.addEventListener('click', () => {
-            showingQuestion = !showingQuestion;
-            showCard();
-        });
+    nextButton.addEventListener('click', () => {
+    if (currentIndex < flashcards.length - 1) {
+    currentIndex++;
+    showingQuestion = true;
+    showCard();
+    }
+    });
+
+    flipButton.addEventListener('click', () => {
+    showingQuestion = !showingQuestion;
+    showCard();
+    });
     </script>
 </body>
 </html>
