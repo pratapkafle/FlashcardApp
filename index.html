@@ -59,6 +59,14 @@
         button:hover {
             background-color: #45a049;
         }
+        #flashcard-sets {
+            margin-bottom: 20px;
+        }
+        select {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+        }
         @media (max-width: 600px) {
             #flashcard {
                 font-size: 20px;
@@ -74,8 +82,13 @@
 <body>
     <div class="container">
         <h1>Flashcard App</h1>
+        <div id="flashcard-sets">
+            <select id="set-selector">
+                <option value="">Select a flashcard set</option>
+            </select>
+        </div>
         <button id="load-flashcards">Load Flashcards</button>
-        <div id="flashcard">Click 'Load Flashcards' to start</div>
+        <div id="flashcard">Select a flashcard set and click 'Load Flashcards' to start</div>
         <div id="controls">
             <button id="prev">Previous</button>
             <button id="flip">Flip</button>
@@ -84,93 +97,131 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/2.0.3/marked.min.js"></script>
-  <script>
-      const fileInput = document.getElementById('file-input');
-      const flashcard = document.getElementById('flashcard');
-      const prevButton = document.getElementById('prev');
-      const flipButton = document.getElementById('flip');
-      const nextButton = document.getElementById('next');
+    <script>
+        const setSelector = document.getElementById('set-selector');
+        const loadButton = document.getElementById('load-flashcards');
+        const flashcard = document.getElementById('flashcard');
+        const prevButton = document.getElementById('prev');
+        const flipButton = document.getElementById('flip');
+        const nextButton = document.getElementById('next');
 
-      let flashcards = [];
-      let currentIndex = 0;
-      let showingQuestion = true;
+        let flashcards = [];
+        let currentIndex = 0;
+        let showingQuestion = true;
 
-      fileInput.addEventListener('change', (event) => {
-          const file = event.target.files[0];
-          const reader = new FileReader();
+        document.addEventListener('DOMContentLoaded', loadFlashcardSets);
+        loadButton.addEventListener('click', loadSelectedFlashcards);
 
-          reader.onload = (e) => {
-              const content = e.target.result;
-              parseMarkdown(content);
-              showCard();
-          };
+        async function loadFlashcardSets() {
+            try {
+                const response = await fetch('https://api.github.com/repos/pratapkafle/FlashcardApp/contents/flashcards');
+                if (!response.ok) {
+                    throw new Error('Failed to load flashcard sets');
+                }
+                const files = await response.json();
+                const mdFiles = files.filter(file => file.name.endsWith('.md'));
+                populateSetSelector(mdFiles);
+            } catch (error) {
+                console.error('Error loading flashcard sets:', error);
+                setSelector.innerHTML = '<option value="">Error loading flashcard sets</option>';
+            }
+        }
 
-          reader.readAsText(file);
-      });
+        function populateSetSelector(files) {
+            setSelector.innerHTML = '<option value="">Select a flashcard set</option>';
+            files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file.name;
+                option.textContent = file.name.replace('.md', '').replace(/_/g, ' ');
+                setSelector.appendChild(option);
+            });
+        }
 
-      function parseMarkdown(content) {
-          const lines = content.split('\n');
-          flashcards = [];
-          let currentQuestion = '';
-          let currentAnswer = '';
+        async function loadSelectedFlashcards() {
+            const selectedSet = setSelector.value;
+            if (!selectedSet) {
+                flashcard.textContent = 'Please select a flashcard set';
+                return;
+            }
 
-          for (const line of lines) {
-              if (line.startsWith('# ')) {
-                  if (currentQuestion && currentAnswer) {
-                      flashcards.push({ question: currentQuestion, answer: currentAnswer });
-                      currentQuestion = '';
-                      currentAnswer = '';
-                  }
-                  currentQuestion = line.substring(2);
-              } else if (line.trim() !== '') {
-                  currentAnswer += line + '\n';
-              }
-          }
+            try {
+                const response = await fetch(`flashcards/${selectedSet}?_=${new Date().getTime()}`);
+                if (!response.ok) {
+                    throw new Error('Failed to load flashcards');
+                }
+                const content = await response.text();
+                parseMarkdown(content);
+                showCard();
+                loadButton.textContent = 'Refresh Flashcards';
+            } catch (error) {
+                console.error('Error loading flashcards:', error);
+                flashcard.textContent = 'Error loading flashcards. Please try again.';
+            }
+        }
 
-          if (currentQuestion && currentAnswer) {
-              flashcards.push({ question: currentQuestion, answer: currentAnswer });
-          }
+        function parseMarkdown(content) {
+            const lines = content.split('\n');
+            flashcards = [];
+            let currentQuestion = '';
+            let currentAnswer = '';
 
-          currentIndex = 0;
-          showingQuestion = true;
-      }
+            for (const line of lines) {
+                if (line.startsWith('# ')) {
+                    if (currentQuestion && currentAnswer) {
+                        flashcards.push({ question: currentQuestion, answer: currentAnswer.trim() });
+                        currentQuestion = '';
+                        currentAnswer = '';
+                    }
+                    currentQuestion = line.substring(2);
+                } else if (line.trim() !== '') {
+                    currentAnswer += line + '\n';
+                }
+            }
 
-      function showCard() {
-          if (flashcards.length === 0) {
-              flashcard.textContent = 'No flashcards available';
-              return;
-          }
+            if (currentQuestion && currentAnswer) {
+                flashcards.push({ question: currentQuestion, answer: currentAnswer.trim() });
+            }
 
-          const card = flashcards[currentIndex];
-          const content = showingQuestion ? card.question : card.answer;
-          flashcard.innerHTML = marked(content);
-      }
+            currentIndex = 0;
+            showingQuestion = true;
+        }
 
-      flashcard.addEventListener('click', () => {
-          showingQuestion = !showingQuestion;
-          showCard();
-      });
+        function showCard() {
+            if (flashcards.length === 0) {
+                flashcard.textContent = 'No flashcards available';
+                return;
+            }
 
-      prevButton.addEventListener('click', () => {
-          if (currentIndex > 0) {
-              currentIndex--;
-              showingQuestion = true;
-              showCard();
-          }
-      });
+            const card = flashcards[currentIndex];
+            const content = showingQuestion ? card.question : card.answer;
+            flashcard.innerHTML = marked(content);
+        }
 
-      nextButton.addEventListener('click', () => {
-          if (currentIndex < flashcards.length - 1) {
-              currentIndex++;
-              showingQuestion = true;
-              showCard();
-          }
-      });
+        flashcard.addEventListener('click', () => {
+            showingQuestion = !showingQuestion;
+            showCard();
+        });
 
-      flipButton.addEventListener('click', () => {
-          showingQuestion = !showingQuestion;
-          showCard();
-      });
-  </script>
+        prevButton.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                showingQuestion = true;
+                showCard();
+            }
+        });
+
+        nextButton.addEventListener('click', () => {
+            if (currentIndex < flashcards.length - 1) {
+                currentIndex++;
+                showingQuestion = true;
+                showCard();
+            }
+        });
+
+        flipButton.addEventListener('click', () => {
+            showingQuestion = !showingQuestion;
+            showCard();
+        });
+    </script>
 </body>
 </html>
