@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashcard App</title>
+  <style>
+      body {
+          font-family: Arial, sans-serif;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          margin: 0;
+          background-color: #f0f0f0;
+      }
+      .container {
+          text-align: center;
+      }
+      #flashcard {
+          width: 300px;
+          height: 200px;
+          background-color: white;
+          border-radius: 10px;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-size: 24px;
+          margin-bottom: 20px;
+          cursor: pointer;
+      }
+      #controls {
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+      }
+      button {
+          padding: 10px 20px;
+          font-size: 16px;
+          cursor: pointer;
+      }
+      #file-input {
+          margin-bottom: 20px;
+      }
+  </style>
+</head>
+<body>
+  <div class="container">
+      <input type="file" id="file-input" accept=".md">
+      <div id="flashcard">Load a markdown file to start</div>
+      <div id="controls">
+          <button id="prev">Previous</button>
+          <button id="flip">Flip</button>
+          <button id="next">Next</button>
+      </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/2.0.3/marked.min.js"></script>
+  <script>
+      const fileInput = document.getElementById('file-input');
+      const flashcard = document.getElementById('flashcard');
+      const prevButton = document.getElementById('prev');
+      const flipButton = document.getElementById('flip');
+      const nextButton = document.getElementById('next');
+
+      let flashcards = [];
+      let currentIndex = 0;
+      let showingQuestion = true;
+
+      fileInput.addEventListener('change', (event) => {
+          const file = event.target.files[0];
+          const reader = new FileReader();
+
+          reader.onload = (e) => {
+              const content = e.target.result;
+              parseMarkdown(content);
+              showCard();
+          };
+
+          reader.readAsText(file);
+      });
+
+      function parseMarkdown(content) {
+          const lines = content.split('\n');
+          flashcards = [];
+          let currentQuestion = '';
+          let currentAnswer = '';
+
+          for (const line of lines) {
+              if (line.startsWith('# ')) {
+                  if (currentQuestion && currentAnswer) {
+                      flashcards.push({ question: currentQuestion, answer: currentAnswer });
+                      currentQuestion = '';
+                      currentAnswer = '';
+                  }
+                  currentQuestion = line.substring(2);
+              } else if (line.trim() !== '') {
+                  currentAnswer += line + '\n';
+              }
+          }
+
+          if (currentQuestion && currentAnswer) {
+              flashcards.push({ question: currentQuestion, answer: currentAnswer });
+          }
+
+          currentIndex = 0;
+          showingQuestion = true;
+      }
+
+      function showCard() {
+          if (flashcards.length === 0) {
+              flashcard.textContent = 'No flashcards available';
+              return;
+          }
+
+          const card = flashcards[currentIndex];
+          const content = showingQuestion ? card.question : card.answer;
+          flashcard.innerHTML = marked(content);
+      }
+
+      flashcard.addEventListener('click', () => {
+          showingQuestion = !showingQuestion;
+          showCard();
+      });
+
+      prevButton.addEventListener('click', () => {
+          if (currentIndex > 0) {
+              currentIndex--;
+              showingQuestion = true;
+              showCard();
+          }
+      });
+
+      nextButton.addEventListener('click', () => {
+          if (currentIndex < flashcards.length - 1) {
+              currentIndex++;
+              showingQuestion = true;
+              showCard();
+          }
+      });
+
+      flipButton.addEventListener('click', () => {
+          showingQuestion = !showingQuestion;
+          showCard();
+      });
+  </script>
+</body>
+</html>
