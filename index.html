@@ -76,6 +76,17 @@
         text-align: left;
         align-self: flex-start;
     }
+    .option {
+        padding: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .correct {
+        background-color: #C6F4D6;
+    }
+    .incorrect {
+        background-color: #F7C6C6;
+    }
     .answer {
         font-weight: bold;
     }
@@ -213,13 +224,25 @@
             content = `<div class="question">${card.question}</div>`;
             content += '<div class="options">';
             card.options.forEach(option => {
-                content += `<p>${option}</p>`;
+                content += `<p class="option">${option}</p>`;
             });
             content += '</div>';
         } else {
             content = `<div class="answer">Answer: ${card.answer}</div>`;
         }
         flashcard.innerHTML = content;
+
+        const options = flashcard.querySelectorAll('.option');
+        options.forEach(option => {
+            option.addEventListener('click', () => {
+                const selectedOption = option.textContent;
+                if (selectedOption === card.answer) {
+                    option.classList.add('correct');
+                } else {
+                    option.classList.add('incorrect');
+                }
+            });
+        });
     }
 
     flashcard.addEventListener('click', () => {
