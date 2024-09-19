@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcard App</title>
+    <title>Improved Flashcard App</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,46 +19,57 @@
         }
         .container {
             width: 100%;
-            max-width: 800px;
-            text-align: center;
+            max-width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
         }
         #flashcard {
             width: 90%;
-            height: 50vh;
-            max-height: 400px;
+            height: 70vh;
             background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            font-size: 18px;
+            font-size: 24px;
             margin: 20px auto;
             cursor: pointer;
-            padding: 20px;
+            padding: 30px;
             box-sizing: border-box;
             overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        #flashcard:hover {
+            transform: scale(1.02);
         }
         #controls {
             display: flex;
-            justify-content: center;
-            gap: 5px; /* Reduced gap for mobile */
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 20px;
         }
-        button {
-            padding: 8px 12px; /* Reduced button size */
-            font-size: 14px; /* Reduced font size */
+        .control-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            font-size: 16px;
             cursor: pointer;
             background-color: #4CAF50;
             color: white;
             border: none;
-            border-radius: 5px;
-            margin: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
         }
-        button:hover {
+        .control-btn:hover {
             background-color: #45a049;
+            transform: scale(1.1);
         }
         #flashcard-sets {
             margin-bottom: 20px;
@@ -66,22 +77,30 @@
         select {
             padding: 10px;
             font-size: 16px;
-            border-radius: 5px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
         }
         .question {
             font-weight: bold;
-            font-size: 24px; /* Increased font size for the question */
-            margin-bottom: 15px;
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #333;
         }
         .options {
             text-align: left;
             align-self: flex-start;
+            width: 100%;
         }
         .option {
-            padding: 10px;
-            border-radius: 5px;
+            padding: 15px;
+            border-radius: 10px;
             cursor: pointer;
-            margin: 0; /* Removed line spacing between options */
+            margin: 10px 0;
+            background-color: #f9f9f9;
+            transition: all 0.2s ease;
+        }
+        .option:hover {
+            background-color: #e9e9e9;
         }
         .correct {
             background-color: #C6F4D6;
@@ -91,42 +110,18 @@
         }
         .answer {
             font-weight: bold;
-        }
-        #rating {
-            margin-top: 20px;
-        }
-        .tab {
-            padding: 10px;
-            cursor: pointer;
-            background-color: #e0e0e0;
-            border: none;
-            border-radius: 5px;
-            margin: 5px;
-        }
-        .active {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .rating-hard {
-            background-color: red;
-            color: white;
-        }
-        .rating-medium {
-            background-color: green;
-            color: white;
-        }
-        .rating-easy {
-            background-color: grey;
-            color: white;
+            font-size: 24px;
+            color: #4CAF50;
         }
         @media (max-width: 600px) {
             #flashcard {
-                font-size: 16px;
-                height: 60vh;
+                font-size: 20px;
+                height: 80vh;
             }
-            button {
-                padding: 6px 10px; /* Further reduced button size for mobile */
-                font-size: 12px; /* Further reduced font size */
+            .control-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 14px;
             }
         }
     </style>
@@ -141,22 +136,9 @@
         <button id="load-flashcards">Load Flashcards</button>
         <div id="flashcard">Select a flashcard set and click 'Load Flashcards' to start</div>
         <div id="controls">
-            <button id="prev">Previous</button>
-            <button id="flip">Flip</button>
-            <button id="next">Next</button>
-            <button id="shuffle">Shuffle Cards</button>
-        </div>
-        <div id="rating">
-            <span>Rate this question:</span>
-            <button class="rate rating-hard" data-value="Hard">Hard</button>
-            <button class="rate rating-medium" data-value="Medium">Medium</button>
-            <button class="rate rating-easy" data-value="Easy">Easy</button>
-        </div>
-        <div id="tabs">
-            <button class="tab active" data-rating="">All Questions</button>
-            <button class="tab" data-rating="Hard">Hard</button>
-            <button class="tab" data-rating="Medium">Medium</button>
-            <button class="tab" data-rating="Easy">Easy</button>
+            <button class="control-btn" id="prev">Prev</button>
+            <button class="control-btn" id="next">Next</button>
+            <button class="control-btn" id="random">Random</button>
         </div>
     </div>
 
@@ -166,23 +148,15 @@
         const loadButton = document.getElementById('load-flashcards');
         const flashcard = document.getElementById('flashcard');
         const prevButton = document.getElementById('prev');
-        const flipButton = document.getElementById('flip');
+        const randomButton = document.getElementById('random');
         const nextButton = document.getElementById('next');
-        const shuffleButton = document.getElementById('shuffle');
-        const ratingButtons = document.querySelectorAll('.rate');
-        const tabs = document.querySelectorAll('.tab');
 
         let flashcards = [];
         let currentIndex = 0;
         let showingQuestion = true;
-        let ratings = {}; // Store ratings for each question
 
         document.addEventListener('DOMContentLoaded', loadFlashcardSets);
         loadButton.addEventListener('click', loadSelectedFlashcards);
-        shuffleButton.addEventListener('click', () => {
-            shuffle(flashcards);
-            showCard();
-        });
 
         async function loadFlashcardSets() {
             try {
@@ -223,7 +197,6 @@
                 }
                 const content = await response.text();
                 parseMarkdown(content);
-                shuffle(flashcards); // Shuffle the flashcards after loading
                 showCard();
                 loadButton.textContent = 'Refresh Flashcards';
             } catch (error) {
@@ -242,7 +215,7 @@
             for (const line of lines) {
                 if (line.startsWith('Q:')) {
                     if (currentQuestion) {
-                        flashcards.push({ question: currentQuestion, options: currentOptions, answer: currentAnswer, rating: '' });
+                        flashcards.push({ question: currentQuestion, options: currentOptions, answer: currentAnswer });
                         currentOptions = [];
                         currentAnswer = '';
                     }
@@ -255,7 +228,7 @@
             }
 
             if (currentQuestion) {
-                flashcards.push({ question: currentQuestion, options: currentOptions, answer: currentAnswer, rating: '' });
+                flashcards.push({ question: currentQuestion, options: currentOptions, answer: currentAnswer });
             }
 
             currentIndex = 0;
@@ -281,20 +254,6 @@
                 content = `<div class="answer">${card.answer}</div>`;
             }
             flashcard.innerHTML = content;
-
-            // Update rating buttons
-            ratingButtons.forEach(button => {
-                button.onclick = () => {
-                    ratings[card.question] = button.getAttribute('data-value');
-                    card.rating = button.getAttribute('data-value'); // Store rating in the card
-                    alert(`Rated "${card.question}" as ${button.getAttribute('data-value')}`);
-                };
-            });
-
-            // Set the rating class based on the stored rating
-            if (card.rating) {
-                flashcard.classList.add(`rating-${card.rating.toLowerCase()}`);
-            }
 
             const options = flashcard.querySelectorAll('.option');
             options.forEach(option => {
@@ -325,46 +284,41 @@
             }
         });
 
-        flipButton.addEventListener('click', () => {
-            showingQuestion = !showingQuestion;
+        randomButton.addEventListener('click', () => {
+            currentIndex = Math.floor(Math.random() * flashcards.length);
+            showingQuestion = true;
             showCard();
         });
 
-        // Shuffle function
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
-
-        // Tab functionality for filtering by rating
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const rating = tab.getAttribute('data-rating');
-                currentIndex = 0; // Reset index to show the first card of the filtered set
-                if (rating === "") {
-                    showCard(); // Show all questions
-                } else {
-                    const filteredCards = flashcards.filter(card => card.rating === rating);
-                    if (filteredCards.length > 0) {
-                        flashcards = filteredCards;
-                        showCard();
-                    } else {
-                        flashcard.textContent = 'No flashcards available for this rating';
-                    }
-                }
-                // Update active tab
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-            });
-        });
-
-        // Add click event to flip the card
         flashcard.addEventListener('click', () => {
             showingQuestion = !showingQuestion;
             showCard();
         });
+
+        // Add touch event listeners for swiping
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        flashcard.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        flashcard.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50; // minimum distance (in pixels) to be considered a swipe
+            if (touchStartX - touchEndX > swipeThreshold) {
+                // Swiped from right to left
+                if (currentIndex < flashcards.length - 1) {
+                    currentIndex++;
+                    showingQuestion = true;
+                    showCard();
+                }
+            }
+        }
     </script>
 </body>
 </html>
