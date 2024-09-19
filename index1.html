@@ -43,13 +43,13 @@
         #controls {
             display: flex;
             justify-content: center;
-            gap: 10px;
+            gap: 5px; /* Reduced gap for mobile */
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
         button {
-            padding: 10px 20px;
-            font-size: 16px;
+            padding: 8px 12px; /* Reduced button size */
+            font-size: 14px; /* Reduced font size */
             cursor: pointer;
             background-color: #4CAF50;
             color: white;
@@ -107,14 +107,26 @@
             background-color: #4CAF50;
             color: white;
         }
+        .rating-hard {
+            background-color: red;
+            color: white;
+        }
+        .rating-medium {
+            background-color: green;
+            color: white;
+        }
+        .rating-easy {
+            background-color: grey;
+            color: white;
+        }
         @media (max-width: 600px) {
             #flashcard {
                 font-size: 16px;
                 height: 60vh;
             }
             button {
-                padding: 8px 16px;
-                font-size: 14px;
+                padding: 6px 10px; /* Further reduced button size for mobile */
+                font-size: 12px; /* Further reduced font size */
             }
         }
     </style>
@@ -136,19 +148,15 @@
         </div>
         <div id="rating">
             <span>Rate this question:</span>
-            <button class="rate" data-value="1">1</button>
-            <button class="rate" data-value="2">2</button>
-            <button class="rate" data-value="3">3</button>
-            <button class="rate" data-value="4">4</button>
-            <button class="rate" data-value="5">5</button>
+            <button class="rate rating-hard" data-value="Hard">Hard</button>
+            <button class="rate rating-medium" data-value="Medium">Medium</button>
+            <button class="rate rating-easy" data-value="Easy">Easy</button>
         </div>
         <div id="tabs">
             <button class="tab active" data-rating="">All Questions</button>
-            <button class="tab" data-rating="1">Rating 1</button>
-            <button class="tab" data-rating="2">Rating 2</button>
-            <button class="tab" data-rating="3">Rating 3</button>
-            <button class="tab" data-rating="4">Rating 4</button>
-            <button class="tab" data-rating="5">Rating 5</button>
+            <button class="tab" data-rating="Hard">Hard</button>
+            <button class="tab" data-rating="Medium">Medium</button>
+            <button class="tab" data-rating="Easy">Easy</button>
         </div>
     </div>
 
@@ -234,7 +242,7 @@
             for (const line of lines) {
                 if (line.startsWith('Q:')) {
                     if (currentQuestion) {
-                        flashcards.push({ question: currentQuestion, options: currentOptions, answer: currentAnswer });
+                        flashcards.push({ question: currentQuestion, options: currentOptions, answer: currentAnswer, rating: '' });
                         currentOptions = [];
                         currentAnswer = '';
                     }
@@ -247,7 +255,7 @@
             }
 
             if (currentQuestion) {
-                flashcards.push({ question: currentQuestion, options: currentOptions, answer: currentAnswer });
+                flashcards.push({ question: currentQuestion, options: currentOptions, answer: currentAnswer, rating: '' });
             }
 
             currentIndex = 0;
@@ -274,13 +282,19 @@
             }
             flashcard.innerHTML = content;
 
-            // Add rating buttons
+            // Update rating buttons
             ratingButtons.forEach(button => {
                 button.onclick = () => {
                     ratings[card.question] = button.getAttribute('data-value');
+                    card.rating = button.getAttribute('data-value'); // Store rating in the card
                     alert(`Rated "${card.question}" as ${button.getAttribute('data-value')}`);
                 };
             });
+
+            // Set the rating class based on the stored rating
+            if (card.rating) {
+                flashcard.classList.add(`rating-${card.rating.toLowerCase()}`);
+            }
 
             const options = flashcard.querySelectorAll('.option');
             options.forEach(option => {
@@ -332,7 +346,7 @@
                 if (rating === "") {
                     showCard(); // Show all questions
                 } else {
-                    const filteredCards = flashcards.filter(card => ratings[card.question] === rating);
+                    const filteredCards = flashcards.filter(card => card.rating === rating);
                     if (filteredCards.length > 0) {
                         flashcards = filteredCards;
                         showCard();
@@ -344,6 +358,12 @@
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
             });
+        });
+
+        // Add click event to flip the card
+        flashcard.addEventListener('click', () => {
+            showingQuestion = !showingQuestion;
+            showCard();
         });
     </script>
 </body>
